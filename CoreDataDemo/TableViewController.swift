@@ -7,10 +7,11 @@
 //
 
 import UIKit
+import CoreData
 
 class TableViewController: UITableViewController {
 
-    var toDoItems = [String]()
+    var toDoItems = [Task]()
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -21,6 +22,26 @@ class TableViewController: UITableViewController {
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
     }
     
+    //MARK: - Function
+    
+    func saveToDo(item: String) {
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let context = appDelegate.persistentContainer.viewContext
+        
+        guard let entity = NSEntityDescription.entity(forEntityName: "Task", in: context) else { return }
+        guard let taskObject = NSManagedObject(entity: entity, insertInto: context) as? Task else { return }
+        taskObject.taskToDo = item
+        
+        do {
+            try context.save()
+            toDoItems.append(taskObject)
+            print("Saved!")
+        } catch {
+            print("Error! \(error), \(error.localizedDescription)")
+        }
+    }
+    
+    
     
     //MARK: - @IBAction
     @IBAction func AddTusk(_ sender: UIBarButtonItem) {
@@ -28,7 +49,7 @@ class TableViewController: UITableViewController {
         alert.addTextField(configurationHandler: nil)
         let addAction = UIAlertAction(title: "Ok", style: .default) { [weak self, weak alert] _ in
             if let text = alert?.textFields?.first?.text {
-                self?.toDoItems.insert(text, at: 0)
+                self?.saveToDo(item: text)
                 self?.tableView.reloadData()
             }
         }
@@ -54,8 +75,9 @@ class TableViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-
-        cell.textLabel?.text = toDoItems[indexPath.row]
+        let item = toDoItems[indexPath.row]
+        
+        cell.textLabel?.text = item.taskToDo
 
         return cell
     }
